@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    h1 { margin-bottom: 8px; }
+    form { border: 1px solid #ddd; padding: 16px; margin-bottom: 16px; border-radius: 8px; }
+    label { display: block; margin-top: 8px; }
+    input, select { padding: 6px; width: 320px; }
+    button { margin-top: 12px; padding: 8px 16px; }
+    pre { background: #f7f7f7; padding: 12px; border-radius: 6px; max-width: 800px; overflow: auto; }
+    .notice { padding: 8px 12px; border-radius: 6px; margin: 8px 0; display: none; }
+    .notice.success { background: #e6ffed; color: #0a5; display: block; }
+    .notice.error { background: #ffecec; color: #c00; display: block; }
+    .dropzone { border: 2px dashed #888; padding: 16px; border-radius: 8px; margin-top: 8px; }
+    .progress { height: 6px; background: #eee; border-radius: 4px; margin-top: 8px; width: 320px; }
+    .progress-inner { height: 6px; background: #09f; width: 0%; border-radius: 4px; }
+  </style>
+  <script>
+    function showNotice(id, msg, ok=true) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'notice ' + (ok ? 'success' : 'error');
+      el.style.display = 'block';
+    }
+
+    function setProgress(id, value) {
+      const el = document.getElementById(id);
+      el.style.width = value + '%';
+    }
+    async function uploadFile(e) {
+      e.preventDefault();
+      const form = e.target;
+      const token = form.token.value.trim();
+      const subject = form.subject.value.trim();
+      const semester = form.semester.value.trim();
+      const book = form.book_title.value.trim();
+      const file = form.file.files[0];
+      if (!token || !subject || !semester || !book || !file) {
+        showNotice('uploadNotice', 'All fields are required', false);
+        return;
+      }
+      
+      // Show progress
+      showNotice('uploadNotice', 'Uploading and processing... This may take a few minutes for large files.', true);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Processing...';
+      submitBtn.disabled = true;
+      
+      const data = new FormData();
+      data.append('token', token);
+      data.append('subject', subject);
+      data.append('semester', semester);
+      data.append('book_title', book);
+      data.append('file', file);
+      
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: data });
+        const json = await res.json();
+        if (res.ok) {
+          showNotice('uploadNotice', 'Upload completed successfully!');
+        } else {
+          showNotice('uploadNotice', json.detail || 'Upload failed', false);
+        }
+        document.getElementById('uploadResult').textContent = JSON.stringify(json, null, 2);
+      } catch (error) {
+        showNotice('uploadNotice', 'Upload failed: ' + error.message, false);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+
+    async function deleteItems(e) {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const payload = Object.fromEntries(fd);
+      payload.delete_source_files = form.delete_source_files.checked;
+      const res = await fetch('/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const json = await res.json();
+      if (res.ok) showNotice('deleteNotice', 'Delete completed'); else showNotice('deleteNotice', json.detail || 'Delete failed', false);
+      document.getElementById('deleteResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function listItems(e) {
+      e.preventDefault();
+      const form = e.target;
+      const payload = Object.fromEntries(new FormData(form));
+      const res = await fetch('/items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const json = await res.json();
+      document.getElementById('listResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function uploadBatch(e) {
+      e.preventDefault();
+      const form = e.target;
+      const token = form.token.value.trim();
+      const subject = form.subject.value.trim();
+      const semester = form.semester.value.trim();
+      const book = form.book_title.value.trim();
+      const files = form.files.files;
+      if (!token || !subject || !semester || !book || !files.length) {
+        showNotice('batchNotice', 'All fields are required', false);
+        return;
+      }
+      const data = new FormData();
+      data.append('token', token);
+      data.append('subject', subject);
+      data.append('semester', semester);
+      data.append('book_title', book);
+      for (const f of files) data.append('files', f);
+      const res = await fetch('/upload-batch', { method: 'POST', body: data });
+      const json = await res.json();
+      if (res.ok) showNotice('batchNotice', `Batch uploaded ${json.count} files`); else showNotice('batchNotice', json.detail || 'Batch upload failed', false);
+      document.getElementById('batchResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function searchItems(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const res = await fetch('/search', { method: 'POST', body: data });
+      const json = await res.json();
+      document.getElementById('searchResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function getStats(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const res = await fetch('/stats', { method: 'POST', body: data });
+      const json = await res.json();
+      document.getElementById('statsResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function checkHealth(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const res = await fetch('/health-check', { method: 'POST', body: data });
+      const json = await res.json();
+      document.getElementById('healthResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function askQuestion(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const res = await fetch('/ask', { method: 'POST', body: data });
+      const json = await res.json();
+      document.getElementById('askResult').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function sendChat(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      
+      // Get chat history
+      const chatHistory = JSON.parse(document.getElementById('chatHistory').value || '[]');
+      const userMessage = form.userMessage.value;
+      
+      // Add user message to history
+      chatHistory.push({ role: 'user', content: userMessage });
+      
+      // Add messages to form data
+      data.append('messages', JSON.stringify(chatHistory));
+      
+      const res = await fetch('/chat', { method: 'POST', body: data });
+      const json = await res.json();
+      
+      if (json.response) {
+        // Add assistant response to history
+        chatHistory.push({ role: 'assistant', content: json.response });
+        document.getElementById('chatHistory').value = JSON.stringify(chatHistory);
+        
+        // Display in chat area
+        const chatArea = document.getElementById('chatArea');
+        chatArea.innerHTML += `<div><strong>You:</strong> ${userMessage}</div>`;
+        chatArea.innerHTML += `<div><strong>Assistant:</strong> ${json.response}</div><hr>`;
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+      
+      document.getElementById('chatResult').textContent = JSON.stringify(json, null, 2);
+      form.userMessage.value = '';
+    }
+  </script>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+  <p>Use this page to upload PDFs/images, delete by filters, and list items. You can also use the API docs at <a href="/docs">/docs</a>.</p>
+
+  <h2>Upload</h2>
+  <form onsubmit="uploadFile(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Subject <input name="subject" required /></label>
+    <label>Semester <input name="semester" required /></label>
+    <label>Book Title <input name="book_title" required /></label>
+    <label>File <input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required /></label>
+    <button type="submit">Upload</button>
+  </form>
+  <div id="uploadNotice" class="notice"></div>
+  <pre id="uploadResult"></pre>
+
+  <h2>Batch Upload</h2>
+  <form onsubmit="uploadBatch(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Subject <input name="subject" required /></label>
+    <label>Semester <input name="semester" required /></label>
+    <label>Book Title <input name="book_title" required /></label>
+    <div class="dropzone" id="dropzone">Drop files here or pick below</div>
+    <label>Files <input type="file" name="files" id="files" accept=".pdf,.png,.jpg,.jpeg" multiple required /></label>
+    <div class="progress"><div class="progress-inner" id="batchProgress"></div></div>
+    <button type="submit">Upload Batch</button>
+  </form>
+  <div id="batchNotice" class="notice"></div>
+  <pre id="batchResult"></pre>
+
+  <h2>Delete</h2>
+  <form onsubmit="deleteItems(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Subject <input name="subject" /></label>
+    <label>Semester <input name="semester" /></label>
+    <label>Book Title <input name="book_title" /></label>
+    <label>Source Path <input name="source_path" /></label>
+    <label>Modality <input name="modality" placeholder="text or image" /></label>
+    <label><input type="checkbox" name="delete_source_files" /> Also delete source files</label>
+    <button type="submit">Delete</button>
+  </form>
+  <div id="deleteNotice" class="notice"></div>
+  <pre id="deleteResult"></pre>
+
+  <h2>List</h2>
+  <form onsubmit="listItems(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Subject <input name="subject" /></label>
+    <label>Semester <input name="semester" /></label>
+    <label>Book Title <input name="book_title" /></label>
+    <label>Source Path <input name="source_path" /></label>
+    <label>Modality <input name="modality" placeholder="text or image" /></label>
+    <label>Limit <input type="number" name="limit" value="50" /></label>
+    <button type="submit">List</button>
+  </form>
+  <pre id="listResult"></pre>
+
+  <h2>Search</h2>
+  <form onsubmit="searchItems(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Query <input name="query" placeholder="Enter your search query..." required /></label>
+    <label>Number of Results <input type="number" name="n_results" value="5" min="1" max="50" /></label>
+    <label>Modality <select name="modality"><option value="text">Text</option><option value="image">Image</option></select></label>
+    <label>Subject <input name="subject" /></label>
+    <label>Semester <input name="semester" /></label>
+    <label>Book Title <input name="book_title" /></label>
+    <button type="submit">Search</button>
+  </form>
+  <pre id="searchResult"></pre>
+
+  <h2>Statistics Dashboard</h2>
+  <form onsubmit="getStats(event)">
+    <label>Token <input name="token" required /></label>
+    <button type="submit">Get Statistics</button>
+  </form>
+  <pre id="statsResult"></pre>
+
+  <h2>Data Health & Quality Check</h2>
+  <form onsubmit="checkHealth(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Subject <input name="subject" placeholder="Optional: filter by subject" /></label>
+    <label>Semester <input name="semester" placeholder="Optional: filter by semester" /></label>
+    <label>Book Title <input name="book_title" placeholder="Optional: filter by book" /></label>
+    <button type="submit">Check Data Health</button>
+  </form>
+  <pre id="healthResult"></pre>
+
+  <h2>RAG Q&A</h2>
+  <form onsubmit="askQuestion(event)">
+    <label>Token <input name="token" required /></label>
+    <label>Query <input name="query" placeholder="Ask a question about your textbooks..." required /></label>
+    <label>Number of Results <input type="number" name="n_results" value="5" min="1" max="20" /></label>
+    <label>Subject <input name="subject" placeholder="Optional: filter by subject" /></label>
+    <label>Semester <input name="semester" placeholder="Optional: filter by semester" /></label>
+    <label>Book Title <input name="book_title" placeholder="Optional: filter by book" /></label>
+    <button type="submit">Ask Question</button>
+  </form>
+  <pre id="askResult"></pre>
+
+  <h2>Chat Interface</h2>
+  <div style="border: 1px solid #ddd; padding: 16px; border-radius: 8px;">
+    <div id="chatArea" style="height: 300px; overflow-y: scroll; margin-bottom: 16px; padding: 8px; background: #f9f9f9; border-radius: 4px;">
+      <div style="color: #666; font-style: italic;">Chat history will appear here...</div>
+    </div>
+    <form onsubmit="sendChat(event)">
+      <label>Token <input name="token" required /></label>
+      <label>Message <input name="userMessage" placeholder="Type your message..." required /></label>
+      <label>Subject <input name="subject" placeholder="Optional: filter by subject" /></label>
+      <label>Semester <input name="semester" placeholder="Optional: filter by semester" /></label>
+      <label>Book Title <input name="book_title" placeholder="Optional: filter by book" /></label>
+      <button type="submit">Send Message</button>
+    </form>
+    <textarea id="chatHistory" style="display: none;"></textarea>
+    <pre id="chatResult"></pre>
+  </div>
+
+  <script>
+    // Drag & drop wiring
+    const drop = document.getElementById('dropzone');
+    const filesInput = document.getElementById('files');
+    if (drop) {
+      ;['dragenter','dragover','dragleave','drop'].forEach(evt => drop.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }));
+      drop.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        if (dt && dt.files) filesInput.files = dt.files;
+      });
+    }
+  </script>
+</body>
+</html>

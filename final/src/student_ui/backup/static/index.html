@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTU Study Assistant - Your AI Learning Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1><i class="fas fa-graduation-cap"></i> VTU Study Assistant</h1>
+            <p>Your AI-powered learning companion for engineering studies</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-container">
+                <div class="nav-brand">VTU Study Assistant</div>
+                <div class="nav-menu">
+                    <div class="nav-item active" data-page="home">
+                        <i class="fas fa-home"></i> Home
+                    </div>
+                    <div class="nav-item" data-page="chat">
+                        <i class="fas fa-comments"></i> Chat
+                    </div>
+                    <div class="nav-item" data-page="pdfs">
+                        <i class="fas fa-file-pdf"></i> PDFs
+                    </div>
+                </div>
+                <div class="current-page-indicator">
+                    Current: <span id="current-page-indicator">Home</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Home Page -->
+            <div id="home-page">
+                <div class="home-section">
+                    <h2>Welcome to VTU Study Assistant</h2>
+                    <p>Choose your semester to explore subjects and start learning with AI-powered assistance</p>
+                    
+                    <!-- Test Navigation Section -->
+                    <div class="test-nav-section">
+                        <h4>Test Navigation</h4>
+                        <button onclick="homePage.testFunction()" class="test-nav-btn js">Test JavaScript</button>
+                        <button onclick="navigation.showChat()" class="test-nav-btn">Test Chat</button>
+                        <button onclick="navigation.showPDFs()" class="test-nav-btn">Test PDFs</button>
+                        <button onclick="navigation.showHome()" class="test-nav-btn">Test Home</button>
+                    </div>
+                </div>
+
+                <div class="semester-grid" id="semester-grid">
+                    <!-- Semesters will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div id="chat-page" hidden>
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <button class="back-button">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </button>
+                        <h3><i class="fas fa-robot"></i> Chat with your Study Assistant</h3>
+                        <div></div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="welcome-message">
+                            <i class="fas fa-lightbulb"></i>
+                            <h3>Welcome to VTU Study Assistant!</h3>
+                            <p>Ask me anything about your engineering subjects. I'll provide structured, well-cited answers with relevant images!</p>
+                        </div>
+                    </div>
+                    <div class="message-input-container">
+                        <div class="message-input-wrapper">
+                            <textarea 
+                                class="message-input" 
+                                id="chat-input" 
+                                placeholder="Ask me about machine learning, cryptography, or any engineering topic..."
+                                rows="1"
+                            ></textarea>
+                            <button class="send-button" id="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Section -->
+            <div id="pdfs-page" hidden>
+                <div class="pdf-section">
+                    <h3><i class="fas fa-file-pdf"></i> Available PDFs</h3>
+                    <div class="pdf-grid" id="pdf-grid">
+                        <!-- PDFs will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Modules -->
+    <script src="js/navigation.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/pdfs.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Initialize application after all modules are loaded
+        window.app = new VTUStudyAssistant();
+    </script>
+</body>
+</html>

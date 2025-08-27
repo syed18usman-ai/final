@@ -1,0 +1,29 @@
+project:
+  name: final-vector-db
+
+storage:
+  chroma_path: storage/vector
+
+models:
+  text: "sentence-transformers/all-MiniLM-L6-v2"
+  image: "sentence-transformers/clip-ViT-B-32"
+
+chunking:
+  max_chars: 1000
+  overlap: 200
+
+admin:
+  token: "qwertyui12345678asdfghjklmnbvcxz0987654321"
+
+llm:
+  provider: "openrouter"
+  api_key: "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"  # Set your OpenRouter API key here
+  model: "anthropic/claude-3-haiku"  # Free model on OpenRouter
+  max_tokens: 1000
+  temperature: 0.7
+  system_prompt: "You are a helpful educational assistant. Answer questions based on the provided context from textbooks. If the context doesn't contain enough information, say so. Be concise but thorough."
+
+data_dirs:
+  raw: data/raw
+  processed: data/processed
+  logs: logs

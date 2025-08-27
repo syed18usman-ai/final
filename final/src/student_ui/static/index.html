@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTU Study Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="brand">VTU Study Assistant</div>
+        <nav class="menu">
+            <a href="#" class="nav-item active" data-page="home">Home</a>
+            <a href="#" class="nav-item" data-page="chat">Chat</a>
+            <a href="#" class="nav-item" data-page="pdfs">PDFs</a>
+        </nav>
+    </header>
+
+    <main class="app-main">
+        <section id="home-page" class="page visible">
+            <h2>Choose Semester and Subject</h2>
+            <div id="semester-grid" class="grid"></div>
+        </section>
+
+        <section id="chat-page" class="page">
+            <h2>Chat</h2>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input">
+                <textarea id="chat-input" placeholder="Type your question..." rows="1"></textarea>
+                <button id="send-button">Send</button>
+            </div>
+        </section>
+
+        <section id="pdf-page" class="page">
+            <h2>PDF Library</h2>
+            <div id="pdf-subjects" class="button-row"></div>
+            <div id="pdf-grid" class="grid"></div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <span id="current-page-indicator">Home</span>
+    </footer>
+
+    <script src="/static/js/navigation.js"></script>
+    <script src="/static/js/home.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/pdfs.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
