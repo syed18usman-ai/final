@@ -28,13 +28,10 @@ yarn-error.log
 
 # Environment
 .env
-.venv/
+.venv
 env/
 venv/
 ENV/
-.venv
-*.venv
-virtualenv/
 
 # IDEs and editors
 .idea/
@@ -45,16 +42,10 @@ virtualenv/
 .DS_Store
 
 # Project specific
-storage/
+storage/vector/chroma.sqlite3
 storage/vector/
 data/raw/
 data/processed/
+data_backup/raw/
+data_backup/processed/
 logs/
-
-# Large files
-*.lib
-*.dll
-*.pyd
-*.sqlite3
-*.sqlite
-*.db
