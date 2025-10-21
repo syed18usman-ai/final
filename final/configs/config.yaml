@@ -18,7 +18,7 @@ admin:
 llm:
   provider: "openrouter"
   api_key: "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"  # Set your OpenRouter API key here
-  model: "anthropic/claude-3-haiku"  # Free model on OpenRouter
+  model: "openai/gpt-oss-20b:free"  # Free model on OpenRouter
   max_tokens: 1000
   temperature: 0.7
   system_prompt: "You are a helpful educational assistant. Answer questions based on the provided context from textbooks. If the context doesn't contain enough information, say so. Be concise but thorough."

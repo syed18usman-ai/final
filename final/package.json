@@ -1,0 +1,12 @@
+{
+  "name": "final",
+  "version": "1.0.0",
+  "description": "Student UI application",
+  "scripts": {
+    "dev": "cd src/student_ui/client && npm run dev",
+    "build": "cd src/student_ui/client && npm run build",
+    "start": "cd src/student_ui/client && npm start"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

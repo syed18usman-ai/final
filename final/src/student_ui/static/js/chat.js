@@ -25,7 +25,7 @@ class ChatPage {
             const { semester, subject } = e.detail;
             this.currentContext = { semester, subject };
             if (this.navigation) this.navigation.showChat();
-            this.addSystemMessage(`Chat started for Semester ${semester} - ${subject}`);
+            this.addSystemMessage(`Chat started! I have access to ALL VTU materials across all semesters and subjects. Ask me anything about VTU curriculum!`);
         });
     }
 
@@ -35,6 +35,11 @@ class ChatPage {
         div.innerHTML = this.formatContent(content);
         this.messagesEl.appendChild(div);
         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+        
+        // Render MathJax equations
+        if (window.MathJax) {
+            MathJax.typesetPromise([div]).catch((err) => console.log('MathJax error:', err));
+        }
     }
 
     addSystemMessage(text) { this.addMessage(`<strong>${text}</strong>`, 'bot'); }
@@ -42,7 +47,9 @@ class ChatPage {
     formatContent(text) {
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\n/g, '<br>');
+            .replace(/\n/g, '<br>')
+            .replace(/\`(.*?)\`/g, '<code>$1</code>')
+            .replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
     }
 
     renderImages(images) {
@@ -91,7 +98,8 @@ class ChatPage {
                     question: text,
                     include_images: true,
                     semester: this.currentContext.semester,
-                    subject: this.currentContext.subject
+                    subject: this.currentContext.subject,
+                    use_universal: true  // Use universal access to all VTU materials
                 })
             });
             if (!res.ok) throw new Error('Request failed');

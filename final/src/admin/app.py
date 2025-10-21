@@ -72,7 +72,7 @@ async def upload(
     token: str = Form(...),
     token_ok: bool = Depends(verify_token),
 ):
-    raw_dir = Path(cfg["data_dirs"]["raw"]) / subject / semester / book_title
+    raw_dir = Path(cfg["data_dirs"]["raw"]) / semester / subject / book_title
     ensure_dirs(str(raw_dir))
     dest = raw_dir / file.filename
     with dest.open("wb") as out:
@@ -546,7 +546,7 @@ async def upload_batch(
     token: str = Form(...),
     token_ok: bool = Depends(verify_token),
 ):
-    raw_dir = Path(cfg["data_dirs"]["raw"]) / subject / semester / book_title
+    raw_dir = Path(cfg["data_dirs"]["raw"]) / semester / subject / book_title
     ensure_dirs(str(raw_dir))
     stored: List[str] = []
     for file in files:

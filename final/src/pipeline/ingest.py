@@ -80,7 +80,7 @@ def ingest_pdf(item: IngestItem, cfg: Dict[str, Any], store: ChromaStore, text_e
     image_ids: List[str] = []
     image_metadatas: List[Dict[str, Any]] = []
     # save images to processed dir
-    processed_base = Path(cfg["data_dirs"]["processed"]) / item.subject / item.semester / item.book_title / "images"
+    processed_base = Path(cfg["data_dirs"]["processed"]) / item.semester / item.subject / item.book_title / "images"
     ensure_dirs(str(processed_base))
     for i, im in enumerate(imgs):
         meta = {
@@ -132,7 +132,7 @@ def ingest_image_file(item: IngestItem, cfg: Dict[str, Any], store: ChromaStore,
     data = path.read_bytes()
     # save processed copy
     ext = path.suffix.lstrip(".") or "png"
-    processed_base = Path(cfg["data_dirs"]["processed"]) / item.subject / item.semester / item.book_title / "images"
+    processed_base = Path(cfg["data_dirs"]["processed"]) / item.semester / item.subject / item.book_title / "images"
     ensure_dirs(str(processed_base))
     img_name = path.name
     dest_path = processed_base / img_name

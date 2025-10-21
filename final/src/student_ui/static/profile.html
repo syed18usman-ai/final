@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTU Study Assistant - Profile</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/profile.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="brand">VTU Study Assistant</div>
+        <nav class="menu">
+            <a href="#" class="nav-item" data-page="home">Home</a>
+            <a href="#" class="nav-item" data-page="chat">Chat</a>
+            <a href="#" class="nav-item" data-page="pdfs">Library</a>
+            <a href="#" class="nav-item active" data-page="profile">Profile</a>
+        </nav>
+        <div class="user-menu">
+            <button id="logout-btn" class="btn btn-secondary">Logout</button>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <section id="profile-page" class="page visible">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <img id="profile-picture" src="" alt="Profile Picture" class="avatar-img">
+                        <div class="avatar-placeholder" id="avatar-placeholder">
+                            <span id="avatar-initials"></span>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profile-name">Loading...</h2>
+                        <p id="profile-email">Loading...</p>
+                        <span id="profile-type" class="user-type-badge">Student</span>
+                    </div>
+                    <button id="edit-profile-btn" class="btn btn-primary">Edit Profile</button>
+                </div>
+
+                <div class="profile-content">
+                    <div class="profile-section">
+                        <h3>Academic Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>College</label>
+                                <span id="profile-college">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Branch</label>
+                                <span id="profile-branch">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Year</label>
+                                <span id="profile-year">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Semester</label>
+                                <span id="profile-semester">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Account Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Email</label>
+                                <span id="profile-email-detail">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Account Type</label>
+                                <span id="profile-account-type">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Member Since</label>
+                                <span id="profile-created">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button id="close-modal" class="close-btn">&times;</button>
+            </div>
+            <form id="edit-profile-form">
+                <div class="form-group">
+                    <label for="edit-name">Full Name</label>
+                    <input type="text" id="edit-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-college">College</label>
+                    <input type="text" id="edit-college" name="college" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-year">Year</label>
+                        <select id="edit-year" name="year" required>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-semester">Semester</label>
+                        <select id="edit-semester" name="semester" required>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                            <option value="3">3rd Semester</option>
+                            <option value="4">4th Semester</option>
+                            <option value="5">5th Semester</option>
+                            <option value="6">6th Semester</option>
+                            <option value="7">7th Semester</option>
+                            <option value="8">8th Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-branch">Branch</label>
+                    <select id="edit-branch" name="branch" required>
+                        <option value="">Select Branch</option>
+                        <option value="CSE">Computer Science & Engineering</option>
+                        <option value="ISE">Information Science & Engineering</option>
+                        <option value="ECE">Electronics & Communication</option>
+                        <option value="EEE">Electrical & Electronics</option>
+                        <option value="ME">Mechanical Engineering</option>
+                        <option value="CE">Civil Engineering</option>
+                        <option value="AE">Aerospace Engineering</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-edit" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/profile.js?v=2"></script>
+</body>
+</html>

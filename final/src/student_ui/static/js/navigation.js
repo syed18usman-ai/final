@@ -32,6 +32,12 @@ class Navigation {
 
         if (this.indicator) this.indicator.textContent = page.charAt(0).toUpperCase() + page.slice(1);
         this.currentPage = page;
+        
+        // Refresh resources when PDF page is shown
+        if (page === 'pdfs' && window.pdfPage) {
+            console.log('PDF page shown, refreshing resources...');
+            window.pdfPage.refreshResources();
+        }
     }
 
     showHome() { this.navigateToPage('home'); }

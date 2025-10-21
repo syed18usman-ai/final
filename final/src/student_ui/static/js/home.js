@@ -1,45 +1,99 @@
 class HomePage {
     constructor() {
-        this.semesterGrid = document.getElementById('semester-grid');
+        this.newsFeed = document.getElementById('news-feed');
+        this.refreshNewsBtn = document.getElementById('refresh-news');
         this.navigation = null; // will be injected by main
-        this.subjectsData = {
-            7: ['ml', 'dl', 'crytography']
-        };
-        // Mapping for display names
-        this.subjectDisplayNames = {
-            'ml': 'Machine Learning',
-            'dl': 'Deep Learning', 
-            'crytography': 'Cryptography'
-        };
-        this.renderSemesters();
+        this.loadNews();
         this.setupEventListeners();
     }
 
-    renderSemesters() {
-        this.semesterGrid.innerHTML = '';
-        Object.keys(this.subjectsData).forEach(sem => {
-            const card = document.createElement('div');
-            card.className = 'card semester-card';
-            card.innerHTML = `
-                <h3>Semester ${sem}</h3>
-                <ul class="subject-list">
-                    ${this.subjectsData[sem].map(s => `<li data-subject="${s}">${this.subjectDisplayNames[s] || s}</li>`).join('')}
-                </ul>
-            `;
-            this.semesterGrid.appendChild(card);
-        });
+    setupEventListeners() {
+        // News refresh button
+        if (this.refreshNewsBtn) {
+            this.refreshNewsBtn.addEventListener('click', () => {
+                this.refreshNews();
+            });
+        }
     }
 
-    setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.subject-list li')) {
-                const subjectItem = e.target.closest('.subject-list li');
-                const semester = subjectItem.closest('.semester-card').querySelector('h3').textContent.replace('Semester ', '');
-                const subject = subjectItem.dataset.subject; // Use the actual subject code from data attribute
-                window.dispatchEvent(new CustomEvent('start-chat', { detail: { semester, subject } }));
-                window.dispatchEvent(new CustomEvent('show-pdfs', { detail: { semester, subject } }));
+    async loadNews() {
+        try {
+            const response = await fetch('/api/news?limit=5');
+            const newsItems = await response.json();
+            this.renderNews(newsItems);
+        } catch (error) {
+            console.error('Error loading news:', error);
+            if (this.newsFeed) {
+                this.newsFeed.innerHTML = '<div class="news-empty">Unable to load news</div>';
             }
-        });
+        }
+    }
+
+    async refreshNews() {
+        try {
+            if (this.refreshNewsBtn) {
+                this.refreshNewsBtn.disabled = true;
+                this.refreshNewsBtn.textContent = '🔄 Refreshing...';
+            }
+            
+            const response = await fetch('/api/news/refresh', { method: 'POST' });
+            const result = await response.json();
+            
+            // Reload news after refresh
+            await this.loadNews();
+            
+            console.log('News refreshed:', result);
+        } catch (error) {
+            console.error('Error refreshing news:', error);
+        } finally {
+            if (this.refreshNewsBtn) {
+                this.refreshNewsBtn.disabled = false;
+                this.refreshNewsBtn.textContent = '🔄 Refresh';
+            }
+        }
+    }
+
+    renderNews(newsItems) {
+        if (!this.newsFeed) return;
+        
+        if (!newsItems || newsItems.length === 0) {
+            this.newsFeed.innerHTML = '<div class="news-empty">No news available</div>';
+            return;
+        }
+
+        this.newsFeed.innerHTML = newsItems.map(newsItem => `
+            <div class="news-item-compact">
+                <div class="news-item-header">
+                    <span class="news-category">${this.getCategoryIcon(newsItem.category)} ${this.getCategoryName(newsItem.category)}</span>
+                    <span class="news-date">${new Date(newsItem.published_date).toLocaleDateString()}</span>
+                </div>
+                <h4 class="news-title">${newsItem.title}</h4>
+                <p class="news-description">${newsItem.content.substring(0, 100)}...</p>
+                <a href="${newsItem.url}" target="_blank" class="news-link">Read More →</a>
+            </div>
+        `).join('');
+    }
+
+    getCategoryIcon(category) {
+        const icons = {
+            'exam': '📝',
+            'result': '📊',
+            'academic': '🎓',
+            'notification': '📢',
+            'general': '📰'
+        };
+        return icons[category] || '📰';
+    }
+
+    getCategoryName(category) {
+        const names = {
+            'exam': 'Exam',
+            'result': 'Result',
+            'academic': 'Academic',
+            'notification': 'Notification',
+            'general': 'General'
+        };
+        return names[category] || 'General';
     }
 }
 

@@ -15,21 +15,27 @@ class ChromaStore:
     def _normalize_where(self, where: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         if not where:
             return None
-        # if it already has an operator, pass through
-        for op in ("$and", "$or", "$not"):
-            if op in where:
-                return where
-        # convert flat dict into $and of equality filters
-        conditions = []
-        for k, v in where.items():
-            conditions.append({k: {"$eq": v}})
-        # Only wrap in $and if there are multiple conditions
-        if len(conditions) > 1:
-            return {"$and": conditions}
-        elif len(conditions) == 1:
-            return conditions[0]
+        # Return as-is if it's already a complex query
+        if any(op in where for op in ("$and", "$or", "$not")):
+            return where
+        # For simple queries, ChromaDB expects direct key-value pairs
+        # or single operator format
+        if len(where) == 1:
+            # Single condition - use direct format
+            key, value = next(iter(where.items()))
+            if isinstance(value, dict) and "$eq" in value:
+                return {key: value}
+            else:
+                return {key: value}
         else:
-            return None
+            # Multiple conditions - use $and
+            conditions = []
+            for k, v in where.items():
+                if isinstance(v, dict) and "$eq" in v:
+                    conditions.append({k: v})
+                else:
+                    conditions.append({k: v})
+            return {"$and": conditions}
 
     # text
     def upsert_text(self, ids: List[str], embeddings: List[List[float]], documents: List[str], metadatas: List[Dict[str, Any]]):

@@ -12,6 +12,15 @@ from src.store.chroma_store import ChromaStore
 from src.embeddings.text_embedder import TextEmbedder
 from src.rag.llm_client import OpenRouterClient, RAGSystem
 from src.embeddings.image_embedder import ImageEmbedder
+from src.services.profile_service import ProfileService
+from src.services.vtu_news_scraper import VTUNewsScraper
+from src.models.user_profile import UserProfile, ProfileUpdate, NewsItem
+from src.auth.routes import router as auth_router
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -35,8 +44,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static assets
+# Include auth routes
+app.include_router(auth_router)
+
+# Serve static assets with no-cache headers
 static_dir = Path("src/student_ui/static")
+
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # Serve processed images (extracted from PDFs)
@@ -51,6 +73,22 @@ async def serve_index():
     if not index_path.exists():
         raise HTTPException(status_code=404, detail="UI not found")
     return HTMLResponse(index_path.read_text(encoding="utf-8"))
+
+# Serve auth page
+@app.get("/auth.html", response_class=HTMLResponse)
+async def serve_auth():
+    auth_path = static_dir / "auth.html"
+    if not auth_path.exists():
+        raise HTTPException(status_code=404, detail="Auth page not found")
+    return HTMLResponse(auth_path.read_text(encoding="utf-8"))
+
+# Serve profile page
+@app.get("/profile.html", response_class=HTMLResponse)
+async def serve_profile():
+    profile_path = static_dir / "profile.html"
+    if not profile_path.exists():
+        raise HTTPException(status_code=404, detail="Profile page not found")
+    return HTMLResponse(profile_path.read_text(encoding="utf-8"))
 
 # Initialize components (RAG)
 try:
@@ -68,9 +106,18 @@ try:
 
     rag_system = RAGSystem(llm_client=llm_client, store=chroma_store, text_embedder=text_embedder)
     rag_system.image_embedder = image_embedder  # attach for image query encoding
+    
+    # Initialize profile service
+    profile_service = ProfileService()
+    
+    # Initialize news scraper
+    news_scraper = VTUNewsScraper()
+    
 except Exception as e:
     logger.error(f"Error initializing components: {e}")
     rag_system = None
+    profile_service = None
+    news_scraper = None
 
 # API Routes
 @app.get("/api/semesters")
@@ -138,13 +185,13 @@ def find_pdf_dirs(semester: str, subject: str) -> list[Path]:
     # Resolve candidate subject directories at root
     subj_dirs = resolve_candidate_subject_dirs(root, subject)
 
-    # Pattern A: data/raw/<semester_variant>/<subject>/...
+    # Pattern A: data/raw/<semester_variant>/<subject>/... (NEW PREFERRED STRUCTURE)
     for sem_cand in sem_candidates:
         base_sem = root / sem_cand
         if base_sem.exists():
             found.extend(resolve_candidate_subject_dirs(base_sem, subject))
 
-    # Pattern B: data/raw/<subject>/<semester_variant>/...
+    # Pattern B: data/raw/<subject>/<semester_variant>/... (LEGACY STRUCTURE - for backward compatibility)
     for sdir in subj_dirs:
         for sem_cand in sem_candidates:
             d = sdir / sem_cand
@@ -227,22 +274,169 @@ async def chat(request: Request):
         include_images = bool(data.get("include_images", True))
         semester = data.get("semester")
         subject = data.get("subject")
+        use_universal = data.get("use_universal", True)  # Default to universal access
         if not question:
             raise HTTPException(status_code=400, detail="question is required")
 
-        logger.info(f"Chat request: question='{question}', semester='{semester}', subject='{subject}'")
+        logger.info(f"Chat request: question='{question}', semester='{semester}', subject='{subject}', universal={use_universal}")
         
-        result = rag_system.ask_question(
-            query=question,
-            n_results=5,
-            subject=subject,
-            semester=semester
-        )
+        if use_universal:
+            # Use universal RAG system - access all VTU materials
+            result = rag_system.generate_universal_answer(
+                query=question,
+                n_results=10
+            )
+            # Convert to expected format
+            formatted_result = {
+                "answer": result["answer"],
+                "sources": result["sources"],
+                "num_chunks_retrieved": result["chunks_used"]
+            }
+        else:
+            # Use subject-specific RAG system
+            result = rag_system.ask_question(
+                query=question,
+                n_results=5,
+                subject=subject,
+                semester=semester
+            )
+            formatted_result = result
         
-        logger.info(f"RAG result: answer_length={len(result.get('answer', ''))}, chunks={result.get('num_chunks_retrieved', 0)}, sources={len(result.get('sources', []))}")
-        logger.info(f"Sources: {result.get('sources', [])}")
+        logger.info(f"RAG result: answer_length={len(formatted_result.get('answer', ''))}, chunks={formatted_result.get('num_chunks_retrieved', 0)}, sources={len(formatted_result.get('sources', []))}")
+        logger.info(f"Sources: {formatted_result.get('sources', [])}")
         
-        return result
+        return formatted_result
     except Exception as e:
         logger.error(f"Error in chat: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Profile Management Endpoints
+@app.post("/api/profile")
+async def create_profile(profile_data: dict):
+    """Create a new user profile"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        user_id = profile_data.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        profile = profile_service.create_profile(user_id, profile_data)
+        return {"message": "Profile created successfully", "profile": profile.dict()}
+    except Exception as e:
+        logger.error(f"Error creating profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/profile/{user_id}")
+async def get_profile(user_id: str):
+    """Get user profile by ID"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        profile = profile_service.get_profile(user_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        return profile.dict()
+    except Exception as e:
+        logger.error(f"Error getting profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/profile/{user_id}")
+async def update_profile(user_id: str, update_data: ProfileUpdate):
+    """Update user profile"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        profile = profile_service.update_profile(user_id, update_data)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        return {"message": "Profile updated successfully", "profile": profile.dict()}
+    except Exception as e:
+        logger.error(f"Error updating profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# News Endpoints
+@app.get("/api/news")
+async def get_news(limit: int = 20):
+    """Get all news items"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        news_items = profile_service.get_all_news(limit)
+        return [item.dict() for item in news_items]
+    except Exception as e:
+        logger.error(f"Error getting news: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/news/profile/{user_id}")
+async def get_news_for_profile(user_id: str, limit: int = 10):
+    """Get news relevant to user's profile"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        news_items = profile_service.get_news_for_profile(user_id, limit)
+        return [item.dict() for item in news_items]
+    except Exception as e:
+        logger.error(f"Error getting profile news: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/news/category/{category}")
+async def get_news_by_category(category: str, limit: int = 10):
+    """Get news by category"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        news_items = profile_service.get_news_by_category(category, limit)
+        return [item.dict() for item in news_items]
+    except Exception as e:
+        logger.error(f"Error getting news by category: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/news/search")
+async def search_news(query: str, limit: int = 10):
+    """Search news by query"""
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    
+    try:
+        news_items = profile_service.search_news(query, limit)
+        return [item.dict() for item in news_items]
+    except Exception as e:
+        logger.error(f"Error searching news: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.api_route("/api/news/refresh", methods=["GET", "POST"])
+async def refresh_news():
+    """Refresh news from VTU website"""
+    if not news_scraper or not profile_service:
+        raise HTTPException(status_code=500, detail="News service not available")
+    try:
+        # Scrape news from VTU website
+        news_items = news_scraper.scrape_news()
+        # Coerce and add
+        profile_service.add_news_items(news_items)
+        # Respond
+        return {"message": f"Refreshed {len(news_items)} news items", "count": len(news_items)}
+    except Exception as e:
+        logger.error(f"Error refreshing news: {e}")
+        # Return mock data if scraping fails
+        from src.services.vtu_news_scraper import MOCK_NEWS_DATA
+        profile_service.add_news_items(MOCK_NEWS_DATA)
+        return {"message": "Using mock news data", "count": len(MOCK_NEWS_DATA)}
+
+@app.get("/api/news/top-notifications")
+async def get_top_notifications(limit: int = 10):
+    if not profile_service:
+        raise HTTPException(status_code=500, detail="Profile service not available")
+    try:
+        items = profile_service.get_top_notifications(limit)
+        return [item.dict() for item in items]
+    except Exception as e:
+        logger.error(f"Error getting top notifications: {e}")
         raise HTTPException(status_code=500, detail=str(e))

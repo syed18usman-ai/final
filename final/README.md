@@ -98,7 +98,7 @@ final/
    ```powershell
    .\scripts\run_admin.ps1
    ```
-   - Admin panel will be available at: `http://localhost:8001`
+   - Admin panel will be available at: `http://localhost:8003`
 
 2. **Start Student Interface** (in a new PowerShell window):
    ```powershell
@@ -115,7 +115,7 @@ final/
 2. **Start Admin Panel**:
    ```powershell
    cd final
-   python -m uvicorn src.admin.app:app --host 0.0.0.0 --port 8001
+   python -m uvicorn src.admin.app:app --host 0.0.0.0 --port 8003
    ```
 
 3. **Start Student Interface** (in new terminal):
@@ -126,10 +126,10 @@ final/
 
 ## 📚 Usage Guide
 
-### Admin Panel (http://localhost:8001)
+### Admin Panel (http://localhost:8003)
 
 #### Uploading Textbooks
-1. **Access the admin panel** at `http://localhost:8001`
+1. **Access the admin panel** at `http://localhost:8003`
 2. **Upload PDFs**:
    - Use the "Upload PDF" section
    - Enter the admin token: `qwertyui12345678asdfghjklmnbvcxz0987654321`
@@ -223,7 +223,7 @@ admin:
 **Solution**:
 - Kill existing processes: `taskkill /f /im python.exe`
 - Use different ports in the scripts
-- Check if other applications are using ports 8001/8002
+- Check if other applications are using ports 8003/8002
 
 #### 3. API Key Issues
 **Problem**: LLM responses failing

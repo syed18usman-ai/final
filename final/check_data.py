@@ -11,15 +11,15 @@ def main():
     semesters = store.get_semesters()
     print(f"Available semesters: {semesters}")
     
-    # Check subjects for semester 7
-    if '7' in semesters:
-        subjects = store.get_subjects('7')
-        print(f"Subjects in semester 7: {subjects}")
+    # Check subjects for all semesters
+    for semester in sorted(semesters):
+        subjects = store.get_subjects(semester)
+        print(f"\nSubjects in semester {semester}: {subjects}")
         
         # Check data for each subject
         for subject in subjects:
-            print(f"\n--- Subject: {subject} ---")
-            results = store.list_text(where={"semester": "7", "subject": subject}, limit=5)
+            print(f"\n--- Semester {semester}, Subject: {subject} ---")
+            results = store.list_text(where={"semester": semester, "subject": subject}, limit=5)
             if results["metadatas"]:
                 print(f"Found {len(results['metadatas'])} text chunks")
                 for i, meta in enumerate(results["metadatas"][:3]):  # Show first 3

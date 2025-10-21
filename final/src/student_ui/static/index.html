@@ -4,7 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VTU Study Assistant</title>
-    <link rel="stylesheet" href="/static/styles.css">
+        <link rel="stylesheet" href="/static/styles.css?v=2">
+    <!-- MathJax for mathematical equations -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
     <header class="app-header">
@@ -12,14 +28,22 @@
         <nav class="menu">
             <a href="#" class="nav-item active" data-page="home">Home</a>
             <a href="#" class="nav-item" data-page="chat">Chat</a>
-            <a href="#" class="nav-item" data-page="pdfs">PDFs</a>
+            <a href="#" class="nav-item" data-page="pdfs">Library</a>
         </nav>
     </header>
 
     <main class="app-main">
         <section id="home-page" class="page visible">
-            <h2>Choose Semester and Subject</h2>
-            <div id="semester-grid" class="grid"></div>
+            <h2>VTU Study Assistant</h2>
+            
+            <!-- News Section -->
+            <div class="news-section">
+                <div class="news-header">
+                    <h3>📰 Latest VTU News & Updates</h3>
+                    <button id="refresh-news" class="btn btn-sm">🔄 Refresh</button>
+                </div>
+                <div id="news-feed" class="news-feed-compact"></div>
+            </div>
         </section>
 
         <section id="chat-page" class="page">
@@ -32,20 +56,21 @@
         </section>
 
         <section id="pdf-page" class="page">
-            <h2>PDF Library</h2>
+            <h2>Resource Library</h2>
             <div id="pdf-subjects" class="button-row"></div>
             <div id="pdf-grid" class="grid"></div>
         </section>
+
     </main>
 
     <footer class="app-footer">
         <span id="current-page-indicator">Home</span>
     </footer>
 
-    <script src="/static/js/navigation.js"></script>
-    <script src="/static/js/home.js"></script>
-    <script src="/static/js/chat.js"></script>
-    <script src="/static/js/pdfs.js"></script>
-    <script src="/static/js/main.js"></script>
+    <script src="/static/js/navigation.js?v=2"></script>
+    <script src="/static/js/home.js?v=2"></script>
+    <script src="/static/js/chat.js?v=2"></script>
+    <script src="/static/js/pdfs.js?v=2"></script>
+    <script src="/static/js/main.js?v=2"></script>
 </body>
 </html>
